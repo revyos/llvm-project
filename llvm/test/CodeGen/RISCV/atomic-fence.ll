@@ -39,12 +39,12 @@ define void @fence_release() nounwind {
 define void @fence_acq_rel() nounwind {
 ; RV32I-LABEL: fence_acq_rel:
 ; RV32I:       # %bb.0:
-; RV32I-NEXT:    fence.tso
+; RV32I-NEXT:    fence rw, rw
 ; RV32I-NEXT:    ret
 ;
 ; RV64I-LABEL: fence_acq_rel:
 ; RV64I:       # %bb.0:
-; RV64I-NEXT:    fence.tso
+; RV64I-NEXT:    fence rw, rw
 ; RV64I-NEXT:    ret
   fence acq_rel
   ret void
