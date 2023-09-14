@@ -326,9 +326,6 @@ fence r,w
 # CHECK-ASM-AND-OBJ: fence w, ir
 # CHECK-ASM: encoding: [0x0f,0x00,0xa0,0x01]
 fence w,ir
-# CHECK-ASM-AND-OBJ: fence.tso
-# CHECK-ASM: encoding: [0x0f,0x00,0x30,0x83]
-fence.tso
 
 # CHECK-ASM-AND-OBJ: fence.i
 # CHECK-ASM: encoding: [0x0f,0x10,0x00,0x00]
