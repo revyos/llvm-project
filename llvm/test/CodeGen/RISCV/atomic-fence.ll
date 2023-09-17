@@ -33,7 +33,7 @@ define void @fence_release() nounwind {
 define void @fence_acq_rel() nounwind {
 ; CHECK-LABEL: fence_acq_rel:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    fence.tso
+; CHECK-NEXT:    fence rw, rw
 ; CHECK-NEXT:    ret
   fence acq_rel
   ret void

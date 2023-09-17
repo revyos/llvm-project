@@ -9,7 +9,7 @@
 
 # CHECK: fence iorw, iorw
 fence iorw, iorw
-# CHECK: fence.tso
-fence.tso
+# CHECK: fence rw, rw
+fence rw, rw
 # CHECK: fence.i
 fence.i
