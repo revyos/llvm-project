@@ -1304,10 +1304,6 @@ void RISCVInstructionSelector::emitFence(AtomicOrdering FenceOrdering,
   switch (FenceOrdering) {
   default:
     llvm_unreachable("Unexpected ordering");
-  case AtomicOrdering::AcquireRelease:
-    // fence acq_rel -> fence.tso
-    MIB.buildInstr(RISCV::FENCE_TSO, {}, {});
-    return;
   case AtomicOrdering::Acquire:
     // fence acquire -> fence r, rw
     Pred = RISCVFenceField::R;
@@ -1318,6 +1314,7 @@ void RISCVInstructionSelector::emitFence(AtomicOrdering FenceOrdering,
     Pred = RISCVFenceField::R | RISCVFenceField::W;
     Succ = RISCVFenceField::W;
     break;
+  case AtomicOrdering::AcquireRelease:
   case AtomicOrdering::SequentiallyConsistent:
     // fence seq_cst -> fence rw, rw
     Pred = RISCVFenceField::R | RISCVFenceField::W;
