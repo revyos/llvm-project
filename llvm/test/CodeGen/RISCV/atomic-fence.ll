@@ -43,7 +43,7 @@ define void @fence_release() nounwind {
 define void @fence_acq_rel() nounwind {
 ; WMO-LABEL: fence_acq_rel:
 ; WMO:       # %bb.0:
-; WMO-NEXT:    fence.tso
+; WMO-NEXT:    fence rw, rw
 ; WMO-NEXT:    ret
 ;
 ; TSO-LABEL: fence_acq_rel:

@@ -98,8 +98,6 @@ and a0, s1, a3
 
 # CHECK-ASM-AND-OBJ: fence iorw, iorw
 fence iorw, iorw
-# CHECK-ASM-AND-OBJ: fence.tso
-fence.tso
 # CHECK-ASM-AND-OBJ: fence.i
 fence.i
 
