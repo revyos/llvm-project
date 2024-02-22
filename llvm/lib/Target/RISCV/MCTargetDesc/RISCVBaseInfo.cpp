@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/TargetParser.h"
 #include "llvm/TargetParser/Triple.h"
@@ -235,4 +236,26 @@ void RISCVZC::printRlist(unsigned SlistEncode, raw_ostream &OS) {
   OS << "}";
 }
 
+namespace RISCVVendorXTHead {
+
+static cl::opt<std::string> RISCVXTheadId("riscv-xthead-id",
+                                          cl::desc("The ID of THead."),
+                                          cl::init("36990897"), cl::Hidden);
+
+bool shouldFixWithId(const MCSubtargetInfo &STI, std::string id) {
+  if (RISCVXTheadId.find(id) == std::string::npos)
+    return false;
+
+  // should fix 36990897 or not. it depends on xtheadcmo and xtheadsync
+  if (id.find("36990897") != std::string::npos) {
+    if (STI.hasFeature(RISCV::FeatureVendorXTHeadCmo) &&
+        STI.hasFeature(RISCV::FeatureVendorXTHeadSync))
+      // Enabled fixing 36990897
+      return true;
+  }
+
+  return false;
+}
+
+} // namespace RISCVVendorXTHead
 } // namespace llvm

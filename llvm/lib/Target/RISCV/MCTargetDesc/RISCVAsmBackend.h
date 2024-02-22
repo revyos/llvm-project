@@ -100,6 +100,10 @@ public:
                     const MCSubtargetInfo *STI) const override;
 
   const MCTargetOptions &getTargetOptions() const { return TargetOptions; }
+
+  void emitInstructionBegin(MCObjectStreamer &OS, const MCInst &Inst,
+                            const MCSubtargetInfo &STI) override;
+  void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst) override;
 };
 }
 
