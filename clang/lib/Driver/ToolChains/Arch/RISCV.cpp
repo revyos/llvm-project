@@ -353,7 +353,8 @@ std::string riscv::getRISCVArch(const llvm::opt::ArgList &Args,
       if (Triple.isAndroid())
         return "rv64imafdcv_zba_zbb_zbs";
 
-      return "rv64imafdc";
+      // return "rv64imafdc";
+      return "rv64gc_zfh_xtheadba_xtheadbb_xtheadbs_xtheadcmo_xtheadcondmov_xtheadfmemidx_xtheadmac_xtheadmemidx_xtheadmempair_xtheadsync";
     }
   }
 
@@ -373,7 +374,8 @@ std::string riscv::getRISCVArch(const llvm::opt::ArgList &Args,
     else if (Triple.isAndroid())
       return "rv64imafdcv_zba_zbb_zbs";
     else
-      return "rv64imafdc";
+//      return "rv64imafdc";
+      return "rv64gc_zfh_xtheadba_xtheadbb_xtheadbs_xtheadcmo_xtheadcondmov_xtheadfmemidx_xtheadmac_xtheadmemidx_xtheadmempair_xtheadsync";
   }
 }
 
