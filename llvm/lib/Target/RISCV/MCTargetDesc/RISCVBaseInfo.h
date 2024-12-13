@@ -604,6 +604,12 @@ inline static bool getSpimm(unsigned RlistVal, unsigned &SpimmVal,
 void printRlist(unsigned SlistEncode, raw_ostream &OS);
 } // namespace RISCVZC
 
+namespace RISCVVendorXTHead {
+
+bool shouldFixWithId(const MCSubtargetInfo &STI, std::string id);
+
+} // namespace RISCVVendorXTHead
+
 } // namespace llvm
 
 #endif

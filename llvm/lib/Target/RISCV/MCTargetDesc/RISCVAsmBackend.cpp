@@ -15,6 +15,8 @@
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInstBuilder.h"
+#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
@@ -707,6 +709,62 @@ bool RISCVAsmBackend::shouldInsertFixupForCodeAlign(MCAssembler &Asm,
   return true;
 }
 
+void RISCVAsmBackend::emitInstructionBegin(MCObjectStreamer &OS,
+                                           const MCInst &Inst,
+                                           const MCSubtargetInfo &STI) {
+  if (RISCVVendorXTHead::shouldFixWithId(STI, "36990897")) {
+    // Work arround for th1520, aone 36990897
+    switch (Inst.getOpcode()) {
+    case RISCV::MRET:
+    case RISCV::SRET:
+      OS.emitInstruction(MCInstBuilder(RISCV::TH_SYNC_I), STI);
+      break;
+    case RISCV::LR_W:
+    case RISCV::LR_W_AQ:
+    case RISCV::LR_W_RL:
+    case RISCV::LR_W_AQ_RL:
+    case RISCV::LR_D:
+    case RISCV::LR_D_AQ:
+    case RISCV::LR_D_RL:
+    case RISCV::LR_D_AQ_RL:
+      MCContext &Ctx = OS.getContext();
+      MCSymbol *TmpLabel = Ctx.createNamedTempSymbol("LR");
+      const MCExpr *RefToLinkTmpLabel = MCSymbolRefExpr::create(TmpLabel, Ctx);
+      MCOperand DestReg = Inst.getOperand(1);
+      OS.emitInstruction(MCInstBuilder(RISCV::TH_SYNC_I), STI);
+      OS.emitInstruction(
+          MCInstBuilder(RISCV::JAL).addReg(0).addExpr(RefToLinkTmpLabel), STI);
+      OS.emitCodeAlignment(Align(128), &STI);
+      OS.emitLabel(TmpLabel);
+      OS.emitInstruction(
+          MCInstBuilder(RISCV::TH_DCACHE_CVAL1).addOperand(DestReg), STI);
+      break;
+    }
+  }
+}
+
+void RISCVAsmBackend::emitInstructionEnd(MCObjectStreamer &OS,
+                                         const MCInst &Inst) {
+  if (RISCVVendorXTHead::shouldFixWithId(STI, "36990897")) {
+    // Work arround for th1520, aone 36990897
+    switch (Inst.getOpcode()) {
+    default:
+      break;
+    case RISCV::LR_W:
+    case RISCV::LR_W_AQ:
+    case RISCV::LR_W_RL:
+    case RISCV::LR_W_AQ_RL:
+    case RISCV::LR_D:
+    case RISCV::LR_D_AQ:
+    case RISCV::LR_D_RL:
+    case RISCV::LR_D_AQ_RL:
+      OS.emitInstruction(MCInstBuilder(RISCV::TH_SYNC), STI);
+      OS.emitCodeAlignment(Align(128), &STI);
+      break;
+    }
+  }
+}
+
 std::unique_ptr<MCObjectTargetWriter>
 RISCVAsmBackend::createObjectTargetWriter() const {
   return createRISCVELFObjectWriter(OSABI, Is64Bit);
@@ -720,3 +778,37 @@ MCAsmBackend *llvm::createRISCVAsmBackend(const Target &T,
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
   return new RISCVAsmBackend(STI, OSABI, TT.isArch64Bit(), Options);
 }
+
+//namespace {
+//class RISCVELFStreamer : public MCELFStreamer {
+//public:
+//  RISCVELFStreamer(MCContext &Context, std::unique_ptr<MCAsmBackend> TAB,
+//                 std::unique_ptr<MCObjectWriter> OW,
+//                 std::unique_ptr<MCCodeEmitter> Emitter)
+//      : MCELFStreamer(Context, std::move(TAB), std::move(OW),
+//                      std::move(Emitter)) {}
+    
+//  void emitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) override;
+//};
+//} // end anonymous namespace
+    
+//void RISCVTargetStreamer::emitInstruction(MCObjectStreamer &S, const MCInst &Inst,
+//                             const MCSubtargetInfo &STI) {
+// auto &Backend = static_cast<RISCVAsmBackend &>(S.getAssembler().getBackend());
+//  Backend.emitInstructionBegin(S, Inst, STI);
+//  S.MCObjectStreamer::emitInstruction(Inst, STI);
+//  Backend.emitInstructionEnd(S, Inst);
+//}
+  
+//void RISCVELFStreamer::emitInstruction(const MCInst &Inst,
+//                                     const MCSubtargetInfo &STI) {
+//  RISCVTargetStreamer::emitInstruction(*this, Inst, STI);
+//} 
+  
+//MCStreamer *llvm::createRISCVELFStreamer(const Triple &T, MCContext &Context,
+//                                       std::unique_ptr<MCAsmBackend> &&MAB,
+//                                       std::unique_ptr<MCObjectWriter> &&MOW,
+//                                       std::unique_ptr<MCCodeEmitter> &&MCE) {
+//  return new RISCVELFStreamer(Context, std::move(MAB), std::move(MOW),
+//                            std::move(MCE));
+//}

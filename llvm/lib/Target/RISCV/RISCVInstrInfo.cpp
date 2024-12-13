@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RISCVInstrInfo.h"
+#include "MCTargetDesc/RISCVBaseInfo.h"
 #include "MCTargetDesc/RISCVMatInt.h"
 #include "RISCV.h"
 #include "RISCVMachineFunctionInfo.h"
@@ -1490,6 +1491,23 @@ unsigned RISCVInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   if (MI.getParent() && MI.getParent()->getParent()) {
     if (isCompressibleInst(MI, STI))
       return 2;
+  }
+  
+  if (RISCVVendorXTHead::shouldFixWithId(STI, "36990897") &&
+      (Opcode == RISCV::PseudoMaskedAtomicSwap32 ||
+       Opcode == RISCV::PseudoMaskedAtomicLoadAdd32 ||
+       Opcode == RISCV::PseudoAtomicLoadNand32 ||
+       Opcode == RISCV::PseudoMaskedAtomicLoadSub32 ||
+       Opcode == RISCV::PseudoMaskedAtomicLoadNand32 ||
+       Opcode == RISCV::PseudoMaskedAtomicLoadMax32 ||
+       Opcode == RISCV::PseudoMaskedAtomicLoadMin32 ||
+       Opcode == RISCV::PseudoMaskedAtomicLoadUMax32 ||
+       Opcode == RISCV::PseudoMaskedAtomicLoadUMin32 ||
+       Opcode == RISCV::PseudoCmpXchg32 || Opcode == RISCV::PseudoCmpXchg64 ||
+       Opcode == RISCV::PseudoMaskedCmpXchg32 ||
+       Opcode == RISCV::PseudoAtomicLoadNand64)) {
+    // Update the atomic pesudo instructions size
+    return get(Opcode).getSize() + 260;
   }
 
   switch (Opcode) {

@@ -69,6 +69,10 @@ public:
                         SmallVectorImpl<MCFixup> &Fixups,
                         const MCSubtargetInfo &STI) const;
 
+  void fixTHEAD36990897(const MCInst &MI, SmallVectorImpl<char> &CB,
+                        SmallVectorImpl<MCFixup> &Fixups,
+                        const MCSubtargetInfo &STI) const;
+
   /// TableGen'erated function for getting the binary encoding for an
   /// instruction.
   uint64_t getBinaryCodeForInstr(const MCInst &MI,
@@ -302,6 +306,20 @@ void RISCVMCCodeEmitter::expandLongCondBr(const MCInst &MI,
   }
 }
 
+void RISCVMCCodeEmitter::fixTHEAD36990897(
+    const MCInst &MI, SmallVectorImpl<char> &CB,
+    SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const {
+  MCInst Inst = MI;
+  uint32_t Binary;
+
+#define MASK_AQ (1 << 26)
+#define MASK_RL (1 << 25)
+  Binary = getBinaryCodeForInstr(Inst, Fixups, STI);
+  // Add AQRL for the lr.w/lr.d
+  Binary = (Binary | MASK_AQ | MASK_RL);
+  support::endian::write(CB, Binary, llvm::endianness::little);
+}
+
 void RISCVMCCodeEmitter::encodeInstruction(const MCInst &MI,
                                            SmallVectorImpl<char> &CB,
                                            SmallVectorImpl<MCFixup> &Fixups,
@@ -309,6 +327,16 @@ void RISCVMCCodeEmitter::encodeInstruction(const MCInst &MI,
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
   // Get byte count of instruction.
   unsigned Size = Desc.getSize();
+
+  // Fix thead 36990897
+  if ((MI.getOpcode() == RISCV::LR_W || MI.getOpcode() == RISCV::LR_W_AQ ||
+       MI.getOpcode() == RISCV::LR_W_RL || MI.getOpcode() == RISCV::LR_D ||
+       MI.getOpcode() == RISCV::LR_D_AQ || MI.getOpcode() == RISCV::LR_D_RL) &&
+      RISCVVendorXTHead::shouldFixWithId(STI, "36990897")) {
+    fixTHEAD36990897(MI, CB, Fixups, STI);
+    MCNumEmitted += 1;
+    return;
+  }
 
   // RISCVInstrInfo::getInstSizeInBytes expects that the total size of the
   // expanded instructions for each pseudo is correct in the Size field of the

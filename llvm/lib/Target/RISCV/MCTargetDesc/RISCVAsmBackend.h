@@ -15,6 +15,7 @@
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCELFStreamer.h"
 
 namespace llvm {
 class MCAssembler;
@@ -100,6 +101,10 @@ public:
                     const MCSubtargetInfo *STI) const override;
 
   const MCTargetOptions &getTargetOptions() const { return TargetOptions; }
+
+  void emitInstructionBegin(MCObjectStreamer &OS, const MCInst &Inst,
+                            const MCSubtargetInfo &STI);
+  void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst);
 };
 }
 

@@ -67,7 +67,8 @@ public:
   void emitDirectiveOptionRelax() override;
   void emitDirectiveOptionNoRelax() override;
   void emitDirectiveVariantCC(MCSymbol &Symbol) override;
-
+  
+  //void emitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) override;
   void finish() override;
 };
 

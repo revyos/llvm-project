@@ -59,6 +59,10 @@ void RISCVTargetELFStreamer::emitDirectiveOptionRVC() {}
 void RISCVTargetELFStreamer::emitDirectiveOptionNoRVC() {}
 void RISCVTargetELFStreamer::emitDirectiveOptionRelax() {}
 void RISCVTargetELFStreamer::emitDirectiveOptionNoRelax() {}
+//void RISCVTargetELFStreamer::emitInstruction(const MCInst &Inst,
+//                                         const MCSubtargetInfo &STI) {
+//  RISCV::emitInstruction(*this, Inst, STI);
+//}
 
 void RISCVTargetELFStreamer::emitAttribute(unsigned Attribute, unsigned Value) {
   getStreamer().setAttributeItem(Attribute, Value, /*OverwriteExisting=*/true);
@@ -169,8 +173,15 @@ void RISCVELFStreamer::changeSection(MCSection *Section, uint32_t Subsection) {
 
 void RISCVELFStreamer::emitInstruction(const MCInst &Inst,
                                        const MCSubtargetInfo &STI) {
-  emitInstructionsMappingSymbol();
-  MCELFStreamer::emitInstruction(Inst, STI);
+  if (RISCVVendorXTHead::shouldFixWithId(STI, "36990897")) {
+    auto &Backend = static_cast<RISCVAsmBackend &>(getAssembler().getBackend());
+    Backend.emitInstructionBegin(*this, Inst, STI);
+    MCELFStreamer::emitInstruction(Inst, STI);
+    Backend.emitInstructionEnd(*this, Inst);
+  } else {
+    emitInstructionsMappingSymbol();
+    MCELFStreamer::emitInstruction(Inst, STI);
+  }
 }
 
 void RISCVELFStreamer::emitBytes(StringRef Data) {
